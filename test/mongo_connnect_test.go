@@ -16,7 +16,7 @@ func TestConnectivity(t *testing.T) {
 	os.Setenv("db.main.url", "mongodb://mongo:mongo@mongodb:27017")
 	os.Setenv("db.main.name", "root-db")
 	core.SetupMongoDB()
-	Assertcommon(core.Connection() != nil, true, t, "TestConnectivity")
+	assertcommon(core.Connection() != nil, true, t, "TestConnectivity")
 
 	data_setup(ctx, core.Connection())
 
@@ -25,17 +25,20 @@ func TestConnectivity(t *testing.T) {
 	}
 	osl := new(OrderStatusMappingLookUpInfo)
 	core.Connection().Find(ctx, q, osl)
-	Assertcommon(osl.MfrStatus, "mfr", t, "TestConnectivity")
+	assertcommon(osl.MfrStatus, "mfr", t, "TestConnectivity")
 
 }
 
-func Assertcommon(actual interface{}, expected interface{}, t *testing.T, testCase string) {
+func assertcommon(actual interface{}, expected interface{}, t *testing.T, testCase string) {
 	result := assert.Equal(t, expected, actual, fmt.Sprintf("Error: Test failed mismatch %s != %s", actual, expected))
 	fmt.Println(result)
 	if !result {
 		t.Fatal(errors.New(fmt.Sprintf("%s failed", testCase)))
+		t.Fatal(errors.New(fmt.Sprintf("%s failed", testCase)))
+
 	}
 }
+
 func data_setup(ctx context.Context, conn *core.DBConnection) {
 	o := OrderStatusMappingLookUpInfo{InternalStatus: "is",
 		MfrStatus: "mfr",

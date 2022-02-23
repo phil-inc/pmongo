@@ -1,4 +1,3 @@
-cd mk
 name: Builds
 
 on:
