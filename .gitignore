@@ -1,0 +1,12 @@
+.vscode/
+debug
+.DS_Store
+
+# editors
+*.swp
+.idea/
+pmongo
+
+vendor/
+
+
