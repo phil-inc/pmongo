@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/phil-inc/pmongo/core"
+	"github.com/phil-inc/pmongo/pkg/core"
 	"github.com/stretchr/testify/assert"
 )
 
