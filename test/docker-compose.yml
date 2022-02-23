@@ -17,4 +17,4 @@ services:
         volumes:
             - ..:/usr/src/pmongo
         working_dir: /usr/src/pmongo
-        command: sh tests2.0/entrypoint.sh
+        command: sh test/entrypoint.sh

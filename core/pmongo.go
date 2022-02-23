@@ -24,7 +24,7 @@ func Get(dbName string) (Db, error) {
 	if db, ok := connectionMap[dbName]; ok {
 		return db, nil
 	}
-	return Db{}, errors.New("Database connection not available. Perform 'Setup' first")
+	return Db{}, errors.New("database connection not available. Perform 'Setup' first")
 }
 
 // DB represents database connection which holds reference to global client and configuration for that database.
@@ -66,7 +66,6 @@ func Setup(dbConfig DBConfig) error {
 
 	/* Initialized database object with global database connection*/
 	connectionMap[dbConfig.DBName] = Db{Config: dbConfig, Client: client}
-
 	return nil
 }
 

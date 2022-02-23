@@ -1,5 +1,4 @@
 #! /bin/bash
 set -e
-
-cd tests2.0
+cd test
 go test *.go

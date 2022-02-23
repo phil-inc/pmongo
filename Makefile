@@ -8,7 +8,9 @@ fmt:
 fmt_list:
 	$(docker_run_with_volume) gofmt -s -l .
 
-
+# Run tests w/ docker services
+test_ci:
+	sh test/entrypoint.sh
 
 test: clean
 	docker-compose -f $(compose_file) up --exit-code-from go-test
@@ -17,4 +19,4 @@ clean:
 	docker rm mongodb -f || true
 	docker rm go-test -f || true
 
-compose_file  = tests2.0/docker-compose.yml
+compose_file  = test/docker-compose.yml
