@@ -20,13 +20,13 @@ func Connection() *DBConnection {
 }
 
 func SetupMongoDB() error {
-	config := DBConfig{HostURL: os.Getenv("db.main.url"), DBName: "MONGO_DB_NAME"}
+	config := DBConfig{HostURL: os.Getenv("db.main.url"), DBName: os.Getenv("db.main.name")}
 	if err := Setup(config); err != nil {
 		log.Fatalf("Error setting up data layer : %s %+v.\n", err, config)
 		return err
 	}
 
-	newPdb, err := Get("DB_URL")
+	newPdb, err := Get(os.Getenv("db.main.name"))
 	if err != nil {
 		log.Fatalf("DB connection error : %s.\n", err)
 	}

@@ -17,4 +17,4 @@ clean:
 	docker rm mongodb -f || true
 	docker rm go-test -f || true
 
-compose_file  = tests2.0/docker-compose.yml
+compose_file  = test/docker-compose.yml
