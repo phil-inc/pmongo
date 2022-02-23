@@ -1,36 +1,36 @@
 package core
 
-import (
-	"log"
-	"os"
+// import (
+// 	"log"
+// 	"os"
 
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
-)
+// 	"go.mongodb.org/mongo-driver/mongo/options"
+// 	"go.mongodb.org/mongo-driver/mongo/readpref"
+// )
 
-var dbConnection Db
+// var dbConnection Db
 
-func SecondaryConnection() *DBConnection {
-	dbOptions := options.Database().SetReadPreference(readpref.SecondaryPreferred())
-	return &DBConnection{DB: dbConnection.Client.Database(dbConnection.Config.DBName, dbOptions)}
-}
+// func SecondaryConnection() *DBConnection {
+// 	dbOptions := options.Database().SetReadPreference(readpref.SecondaryPreferred())
+// 	return &DBConnection{DB: dbConnection.Client.Database(dbConnection.Config.DBName, dbOptions)}
+// }
 
-func Connection() *DBConnection {
-	return &DBConnection{DB: dbConnection.Client.Database(dbConnection.Config.DBName)}
-}
+// func Connection() *DBConnection {
+// 	return &DBConnection{DB: dbConnection.Client.Database(dbConnection.Config.DBName)}
+// }
 
-func SetupMongoDB(config DBConfig) error {
-	if err := Setup(config); err != nil {
-		log.Fatalf("Error setting up data layer : %s %+v.\n", err, config)
-		return err
-	}
+// func SetupMongoDB(config DBConfig) error {
+// 	if err := Setup(config); err != nil {
+// 		log.Fatalf("Error setting up data layer : %s %+v.\n", err, config)
+// 		return err
+// 	}
 
-	newPdb, err := Get(os.Getenv("db.main.name"))
-	if err != nil {
-		log.Fatalf("DB connection error : %s.\n", err)
-	}
+// 	newPdb, err := Get(os.Getenv("db.main.name"))
+// 	if err != nil {
+// 		log.Fatalf("DB connection error : %s.\n", err)
+// 	}
 
-	dbConnection = newPdb
+// 	dbConnection = newPdb
 
-	return nil
-}
+// 	return nil
+// }
