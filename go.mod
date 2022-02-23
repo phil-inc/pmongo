@@ -1,4 +1,4 @@
-module pmongo
+module github.com/phil-inc/pmongo
 
 go 1.17
 
