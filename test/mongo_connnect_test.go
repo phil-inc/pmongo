@@ -15,7 +15,8 @@ func TestConnectivity(t *testing.T) {
 	ctx := context.Background()
 	os.Setenv("db.main.url", "mongodb://mongo:mongo@mongodb:27017")
 	os.Setenv("db.main.name", "root-db")
-	core.SetupMongoDB()
+	config := core.DBConfig{HostURL: os.Getenv("db.main.url"), DBName: os.Getenv("db.main.name")}
+	core.SetupMongoDB(config)
 	assertcommon(core.Connection() != nil, true, t, "TestConnectivity")
 
 	data_setup(ctx, core.Connection())
