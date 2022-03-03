@@ -2,8 +2,10 @@
 Pmongo is wrapper of mongo_driver of go.mongodb.org/mongo-driver/mongo/options customized as per phil's
 requirement.
 
+# Depedency
 go get github.com/phil-inc/pmongo
 
+# usage
 Provide DBConfig or Slice of DBConfig with connection url and Db name in system properties.
 Example code to init mongo connectino:
 ```
