@@ -1,13 +1,12 @@
 # pmongo
-Pmongo is wrapper of mongo_driver of go.mongodb.org/mongo-driver/mongo/options customized as per phil's
-requirement.
+Pmongo is a wrapper on go mongo driver: go.mongodb.org/mongo-driver/mongo/options customized to easily create and manage mongo connection(s).
 
 # Depedency
 go get github.com/phil-inc/pmongo
 
 # usage
-Provide DBConfig or Slice of DBConfig with connection url and Db name in system properties.
-Example code to init mongo connectino:
+Provide DBConfig or Slice of DBConfig with connection URL and Db name in system properties.
+Example code to init mongo connection:
 ```
 var mongoAppDB *core.DBConnection
 
@@ -24,11 +23,12 @@ func GetConnection() *core.DBConnection {
 }
 ```
 
-Example code to use mongo connection:
+Example code for using the connection created:
 ```
 GetConnection().Save(context, structure)
 ```
-
+context: refer to go context
+the structure is any go structure.
 
 # Unit test
 ```bash
