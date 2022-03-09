@@ -38,5 +38,4 @@ make test
 # fmt
 ```bash
 make fmt
-go fmt ./...
 ```
