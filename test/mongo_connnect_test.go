@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -123,11 +122,10 @@ func TestMultiSecondaryDbConnectivity(t *testing.T) {
 
 func assertcommon(actual interface{}, expected interface{}, t *testing.T, testCase string) {
 	result := assert.Equal(t, expected, actual, fmt.Sprintf("Error: Test failed mismatch %s != %s", actual, expected))
-	fmt.Println(result)
 	if !result {
-		t.Fatal(errors.New(fmt.Sprintf("%s failed", testCase)))
+		t.Fatal(fmt.Errorf("%s failed", testCase))
 	} else {
-		fmt.Printf(testCase)
+		fmt.Println(testCase)
 	}
 }
 
