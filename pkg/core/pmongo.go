@@ -45,7 +45,6 @@ var ErrNoDocumentsFound = errors.New("mongo: no documents in result").Error()
 // Setup the MongoDB connection based on passed in config. It can be called multiple times to setup connection to
 // multiple MongoDB instances.
 func Setup(dbConfig DBConfig) error {
-	log.Printf("Connecting to %s via pmongo...", dbConfig.DBName)
 	if dbConfig.HostURL == "" || dbConfig.DBName == "" {
 		return errors.New("invalid connection info. Missing host and db info")
 	}
