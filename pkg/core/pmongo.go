@@ -78,6 +78,27 @@ func NewDBRef(collectionName string, ID interface{}) *DBRef {
 	return &DBRef{Collection: collectionName, Id: ObjectID(ID)}
 }
 
+func NewObjectID() primitive.ObjectID {
+	return primitive.NewObjectID()
+}
+
+/*
+Functions handling Mongo Driver ObjectID
+*/
+//ObjectID returns objectID from interface
+func ObjectID(id interface{}) primitive.ObjectID {
+	if id != nil {
+		switch v := id.(type) {
+		case string:
+			i, _ := primitive.ObjectIDFromHex(v)
+			return i
+		case primitive.ObjectID:
+			return v
+		}
+	}
+	return [12]byte{}
+}
+
 // DBConfig represents the configuration params needed for MongoDB connection
 type DBConfig struct {
 	HostURL, DBName string
