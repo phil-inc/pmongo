@@ -231,3 +231,12 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 
 	return err
 }
+
+func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
+	_, err := Connection().Collection(collectionName).InsertMany(ctx, documents)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
