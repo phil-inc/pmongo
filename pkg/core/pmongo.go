@@ -68,6 +68,16 @@ func Setup(dbConfig DBConfig) error {
 	return nil
 }
 
+type DBRef struct {
+	Collection string      `bson:"$ref"`
+	Id         interface{} `bson:"$id"`
+}
+
+// NewDBRef returns the mongo DBRef for given collection name and object ID
+func NewDBRef(collectionName string, ID interface{}) *DBRef {
+	return &DBRef{Collection: collectionName, Id: ObjectID(ID)}
+}
+
 // DBConfig represents the configuration params needed for MongoDB connection
 type DBConfig struct {
 	HostURL, DBName string
