@@ -231,3 +231,18 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 
 	return err
 }
+
+// Find the latest data based on given query
+func (s *DBConnection) FindLatest(ctx context.Context, query Q, document Document) error {
+	opts := &options.FindOneOptions{
+		Sort: map[string]int{"createdDate": -1},
+	}
+
+	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
+	if err != nil {
+		if err.Error() != mongo.ErrNoDocuments.Error() {
+			log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
+		}
+	}
+	return err
+}
