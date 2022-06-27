@@ -37,7 +37,7 @@ type CursorOptions struct {
 	BatchSize int32
 	Limit     int64
 	Skip      int64
-	Sort      map[string]int
+	Sort      bson.D
 }
 
 var ErrNoDocumentsFound = errors.New("mongo: no documents in result").Error()
