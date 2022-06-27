@@ -271,3 +271,12 @@ func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, do
 
 	return nil
 }
+
+func (s *DBConnection) FindAggregateCollection(ctx context.Context, pipeline mongo.Pipeline, document Document) (*mongo.Cursor, error) {
+	cursor, err := s.Collection(document.CollectionName()).Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	return cursor, nil
+}
