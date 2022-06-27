@@ -68,6 +68,37 @@ func Setup(dbConfig DBConfig) error {
 	return nil
 }
 
+type DBRef struct {
+	Collection string      `bson:"$ref"`
+	Id         interface{} `bson:"$id"`
+}
+
+// NewDBRef returns the mongo DBRef for given collection name and object ID
+func NewDBRef(collectionName string, ID interface{}) *DBRef {
+	return &DBRef{Collection: collectionName, Id: ObjectID(ID)}
+}
+
+func NewObjectID() primitive.ObjectID {
+	return primitive.NewObjectID()
+}
+
+/*
+Functions handling Mongo Driver ObjectID
+*/
+//ObjectID returns objectID from interface
+func ObjectID(id interface{}) primitive.ObjectID {
+	if id != nil {
+		switch v := id.(type) {
+		case string:
+			i, _ := primitive.ObjectIDFromHex(v)
+			return i
+		case primitive.ObjectID:
+			return v
+		}
+	}
+	return [12]byte{}
+}
+
 // DBConfig represents the configuration params needed for MongoDB connection
 type DBConfig struct {
 	HostURL, DBName string
@@ -230,4 +261,13 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 	_, err := s.Collection(collectionName).UpdateOne(ctx, query, bson.M{"$set": bson.M{field: value}})
 
 	return err
+}
+
+func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
+	_, err := Connection().Collection(collectionName).InsertMany(ctx, documents)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
