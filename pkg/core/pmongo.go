@@ -273,7 +273,7 @@ func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, do
 }
 
 // Sort by ID and Find latest entry in the collection
-func (s *DBConnection) FindLatestByID(ctx context.Context, query Q, document Document) error {
+func (s *DBConnection) FindLastestDocument(ctx context.Context, query Q, document Document) error {
 	opts := &options.FindOneOptions{
 		Sort: map[string]int{"_id": -1},
 	}
