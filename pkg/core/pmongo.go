@@ -213,7 +213,7 @@ func (s *DBConnection) Exists(ctx context.Context, query Q, document Document) (
 	return true, nil
 }
 
-//Remove removes the given document type based on the query
+// Remove removes the given document type based on the query
 func (s *DBConnection) Remove(ctx context.Context, query Q, document Document) error {
 	_, err := s.Collection(document.CollectionName()).DeleteOne(ctx, query)
 	return err
@@ -229,13 +229,13 @@ func (s *DBConnection) RemoveByID(ctx context.Context, id string, result Documen
 	return s.Remove(ctx, Q{"_id": objID}, result)
 }
 
-//RemoveAll removes all the document matching given selector query
+// RemoveAll removes all the document matching given selector query
 func (s *DBConnection) RemoveAll(ctx context.Context, query Q, document Document) error {
 	_, err := s.Collection(document.CollectionName()).DeleteMany(ctx, query)
 	return err
 }
 
-//RemoveAllWithCount removes all the document matching given selector query
+// RemoveAllWithCount removes all the document matching given selector query
 func (s *DBConnection) RemoveAllWithCount(ctx context.Context, query Q, document Document) (int64, error) {
 	res, err := s.Collection(document.CollectionName()).DeleteMany(ctx, query)
 	if res == nil {
@@ -244,7 +244,7 @@ func (s *DBConnection) RemoveAllWithCount(ctx context.Context, query Q, document
 	return res.DeletedCount, err
 }
 
-//GetCursor gets a cursor to iterate over the documents returned by the selector
+// GetCursor gets a cursor to iterate over the documents returned by the selector
 func (s *DBConnection) GetCursor(ctx context.Context, query Q, collectionName string, cursorOptions CursorOptions) (*mongo.Cursor, error) {
 	opts := &options.FindOptions{
 		BatchSize: &cursorOptions.BatchSize,
@@ -256,7 +256,7 @@ func (s *DBConnection) GetCursor(ctx context.Context, query Q, collectionName st
 	return s.Collection(collectionName).Find(ctx, query, opts)
 }
 
-//UpdateFieldValue updates the single field with a given value for a collection name based query
+// UpdateFieldValue updates the single field with a given value for a collection name based query
 func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collectionName, field string, value interface{}) error {
 	_, err := s.Collection(collectionName).UpdateOne(ctx, query, bson.M{"$set": bson.M{field: value}})
 
@@ -265,6 +265,20 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 
 func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
 	_, err := Connection().Collection(collectionName).InsertMany(ctx, documents)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Sort by ID and Find latest entry in the collection
+func (s *DBConnection) FindLatestByID(ctx context.Context, query Q, document Document) error {
+	opts := &options.FindOneOptions{
+		Sort: map[string]int{"_id": -1},
+	}
+
+	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
 	if err != nil {
 		return err
 	}
