@@ -8,14 +8,14 @@ on:
 jobs:
   lint-repo:
     name: Lint & format code
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: go fmt
         run: if [ "$(make fmt_list | wc -l)" -gt 1 ]; then exit 1; fi
   test-repo:
     name: Run `go test`
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Test
