@@ -174,9 +174,33 @@ func (s *DBConnection) Find(ctx context.Context, query Q, document Document) err
 	return err
 }
 
+func (s *DBConnection) FindWithOpts(ctx context.Context, query Q, document Document, opts *options.FindOneOptions) error {
+	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
+	if err != nil {
+		if err.Error() != mongo.ErrNoDocuments.Error() {
+			log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
+		}
+	}
+	return err
+}
+
 // FindAll returns all the documents based on given query
 func (s *DBConnection) FindAll(ctx context.Context, query Q, document Document) (interface{}, error) {
 	curr, err := s.Collection(document.CollectionName()).Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	documents := slice(document)
+	err = curr.All(ctx, documents)
+	if err != nil {
+		return nil, err
+	}
+	return results(documents)
+}
+
+// FindAllWithOpts returns all the documents based on given query & find options
+func (s *DBConnection) FindAllWithOpts(ctx context.Context, query Q, document Document, opts *options.FindOptions) (interface{}, error) {
+	curr, err := s.Collection(document.CollectionName()).Find(ctx, query, opts)
 	if err != nil {
 		return nil, err
 	}
