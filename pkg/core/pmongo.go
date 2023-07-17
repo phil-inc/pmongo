@@ -309,3 +309,15 @@ func (s *DBConnection) FindLastestDocument(ctx context.Context, query Q, documen
 
 	return nil
 }
+
+// FindAllWithProjection returns all the documents based on given query and specific field(s) specified in projections
+func (s *DBConnection) FindAllWithProjection(ctx context.Context, query Q, p Q, document Document) (interface{}, error) {
+	opts := options.Find().SetProjection(p)
+	return s.FindAllWithOpts(ctx, query, document, opts)
+}
+
+// FindWithProjection returns the document based on given query and specific field(s) specified in projections
+func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, document Document) error {
+	opts := options.FindOne().SetProjection(p)
+	return s.FindWithOpts(ctx, query, document, opts)
+}
