@@ -321,3 +321,28 @@ func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, doc
 	opts := options.FindOne().SetProjection(p)
 	return s.FindWithOpts(ctx, query, document, opts)
 }
+
+// BulkWriteUpdate performs bulk update operation
+func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
+	if len(documents) == 0 {
+		return errors.New("No data to update")
+	}
+	models := make([]mongo.WriteModel, 0, len(documents))
+	for id, doc := range documents {
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return err
+		}
+		filter := bson.M{"_id": objectID}
+		update := bson.M{"$set": doc}
+		model := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update)
+		models = append(models, model)
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := s.Collection(collectionName).BulkWrite(ctx, models, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
