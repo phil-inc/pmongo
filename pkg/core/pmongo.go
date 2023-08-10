@@ -346,3 +346,37 @@ func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName strin
 	}
 	return nil
 }
+
+// Unique retrieves unique values for a specified field in a MongoDB collection based on a given query.
+// It returns a slice of unique values and any error encountered during the retrieval process.
+// If there are no documents found for the query, it returns a nil slice and nil error.
+//
+// Parameters:
+// - ctx: The context.
+// - fieldName: The name of the field to retrieve unique values for.
+// - query: The query to filter the documents.
+// - document: A document struct that represents the collection.
+//
+// Example Usage:
+//   dbConn := &DBConnection{}
+//   fieldName := "name"
+//   query := bson.M{"age": bson.M{"$gt": 18}}
+//   document := &User{}
+//   result, err := dbConn.Unique(context.Background(), fieldName, query, document)
+//   if err != nil {
+//       log.Fatal(err)
+//   }
+//   fmt.Println(result)
+
+func (s *DBConnection) Unique(ctx context.Context, fieldName string, query interface{}, document Document) ([]interface{}, error) {
+	result, err := s.Collection(document.CollectionName()).Distinct(ctx, fieldName, query)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			log.Printf("No documents found for query: %s\n", query)
+			return nil, nil // Return nil slice and nil error to indicate no documents found
+		}
+		log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
+		return nil, err
+	}
+	return result, nil
+}
