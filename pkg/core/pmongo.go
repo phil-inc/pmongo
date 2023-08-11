@@ -371,9 +371,6 @@ func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName strin
 func (s *DBConnection) Unique(ctx context.Context, fieldName string, query interface{}, document Document) ([]interface{}, error) {
 	result, err := s.Collection(document.CollectionName()).Distinct(ctx, fieldName, query)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, err
-		}
 		return nil, err
 	}
 	return result, nil
