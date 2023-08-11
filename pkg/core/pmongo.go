@@ -372,10 +372,8 @@ func (s *DBConnection) Unique(ctx context.Context, fieldName string, query inter
 	result, err := s.Collection(document.CollectionName()).Distinct(ctx, fieldName, query)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Printf("No documents found for query: %s\n", query)
-			return nil, nil // Return nil slice and nil error to indicate no documents found
+			return nil, err
 		}
-		log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
 		return nil, err
 	}
 	return result, nil
