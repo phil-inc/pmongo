@@ -375,3 +375,17 @@ func (s *DBConnection) Unique(ctx context.Context, fieldName string, query inter
 	}
 	return result, nil
 }
+
+// Sort by ID and Find first entry in the collection
+func (s *DBConnection) FindFirstDocument(ctx context.Context, query Q, document Document) error {
+	opts := &options.FindOneOptions{
+		Sort: map[string]int{"_id": 1},
+	}
+
+	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
