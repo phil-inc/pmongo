@@ -389,3 +389,10 @@ func (s *DBConnection) FindFirstDocument(ctx context.Context, query Q, document 
 
 	return nil
 }
+
+// UpdateManyUsingQuery updates the field(s) based on the update query of the documents given by selector
+func (s *DBConnection) UpdateManyUsingQuery(ctx context.Context, selector Q, updateQuery Q, document Document) error {
+	coll := s.Collection(document.CollectionName())
+	_, err := coll.UpdateMany(ctx, selector, updateQuery)
+	return err
+}
