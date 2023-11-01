@@ -33,6 +33,7 @@ type Db struct {
 	Client *mongo.Client
 }
 
+// CursorOptions represents options for querying a database cursor.
 type CursorOptions struct {
 	BatchSize int32
 	Limit     int64
@@ -40,6 +41,7 @@ type CursorOptions struct {
 	Sort      bson.D
 }
 
+// ErrNoDocumentsFound is an error returned when no documents are found in a MongoDB result.
 var ErrNoDocumentsFound = errors.New("mongo: no documents in result").Error()
 
 // Setup the MongoDB connection based on passed in config. It can be called multiple times to setup connection to
@@ -68,38 +70,7 @@ func Setup(dbConfig DBConfig) error {
 	return nil
 }
 
-type DBRef struct {
-	Collection string      `bson:"$ref"`
-	Id         interface{} `bson:"$id"`
-}
-
-// NewDBRef returns the mongo DBRef for given collection name and object ID
-func NewDBRef(collectionName string, ID interface{}) *DBRef {
-	return &DBRef{Collection: collectionName, Id: ObjectID(ID)}
-}
-
-func NewObjectID() primitive.ObjectID {
-	return primitive.NewObjectID()
-}
-
-/*
-Functions handling Mongo Driver ObjectID
-*/
-//ObjectID returns objectID from interface
-func ObjectID(id interface{}) primitive.ObjectID {
-	if id != nil {
-		switch v := id.(type) {
-		case string:
-			i, _ := primitive.ObjectIDFromHex(v)
-			return i
-		case primitive.ObjectID:
-			return v
-		}
-	}
-	return [12]byte{}
-}
-
-// DBConfig represents the configuration params needed for MongoDB connection
+// DBConfig represents the configuration parameters needed for a MongoDB connection.
 type DBConfig struct {
 	HostURL, DBName string
 	Mode            int
@@ -174,6 +145,7 @@ func (s *DBConnection) Find(ctx context.Context, query Q, document Document) err
 	return err
 }
 
+// FindWithOpts finds the data based on the given query with specified find options.
 func (s *DBConnection) FindWithOpts(ctx context.Context, query Q, document Document, opts *options.FindOneOptions) error {
 	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
 	if err != nil {
@@ -212,6 +184,7 @@ func (s *DBConnection) FindAllWithOpts(ctx context.Context, query Q, document Do
 	return results(documents)
 }
 
+// results converts a slice of documents into an interface.
 func results(documents interface{}) (interface{}, error) {
 	return reflect.ValueOf(documents).Elem().Interface(), nil
 }
@@ -287,6 +260,7 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 	return err
 }
 
+// InsertMany inserts multiple documents into a collection.
 func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
 	_, err := s.Collection(collectionName).InsertMany(ctx, documents)
 	if err != nil {
@@ -296,7 +270,7 @@ func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, do
 	return nil
 }
 
-// Sort by ID and Find latest entry in the collection
+// FindLastestDocument finds the latest entry in the collection, sorted by ID.
 func (s *DBConnection) FindLastestDocument(ctx context.Context, query Q, document Document) error {
 	opts := &options.FindOneOptions{
 		Sort: map[string]int{"_id": -1},
@@ -395,4 +369,15 @@ func (s *DBConnection) UpdateManyUsingQuery(ctx context.Context, selector Q, upd
 	coll := s.Collection(document.CollectionName())
 	_, err := coll.UpdateMany(ctx, selector, updateQuery)
 	return err
+}
+
+// FindByObjectIDs finds documents based on an slice of string ObjectIDs.
+func (s *DBConnection) FindByObjectIDs(ctx context.Context, oIDs []string, document Document) (interface{}, error) {
+	q := Q{
+		"_id": Q{
+			"$in": StringIDsToObjectIDs(oIDs),
+		},
+	}
+
+	return s.FindAll(ctx, q, document)
 }
