@@ -1,4 +1,4 @@
-docker_run_with_volume = docker run --rm -v "$$(pwd)":/usr/src/pmongo -w /usr/src/pmongo golang:1.17
+docker_run_with_volume = docker run --rm -v "$$(pwd)":/usr/src/pmongo -w /usr/src/pmongo golang:1.21
 
 # go fmt
 fmt:

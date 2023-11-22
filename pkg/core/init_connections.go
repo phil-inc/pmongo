@@ -17,7 +17,7 @@ func SecondaryConnectionByName(dbName string) *DBConnection {
 	return &DBConnection{DB: dbConnectionMap[dbName].Client.Database(dbConnectionMap[dbName].Config.DBName, dbOptions)}
 }
 
-//Will return the only db secondary connection.
+// Will return the only db secondary connection.
 // if your app is connected to multiple mongodb, then please use SecondaryConnectionByName
 // this will return nil
 func SecondaryConnection() *DBConnection {
@@ -30,7 +30,7 @@ func SecondaryConnection() *DBConnection {
 	return nil
 }
 
-//Will return connection by db name from connection map.
+// Will return connection by db name from connection map.
 func ConnectionByName(dbName string) *DBConnection {
 	return &DBConnection{DB: dbConnectionMap[dbName].Client.Database(dbConnectionMap[dbName].Config.DBName)}
 }
@@ -46,7 +46,7 @@ func Connection() *DBConnection {
 	return nil
 }
 
-//Set up mongodb with provided vargs of configs.
+// Set up mongodb with provided vargs of configs.
 func SetupMongoDB(configs ...DBConfig) error {
 	for _, config := range configs {
 		if err := Setup(config); err != nil {
