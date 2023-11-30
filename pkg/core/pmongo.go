@@ -50,13 +50,9 @@ func Setup(dbConfig DBConfig) error {
 	if dbConfig.HostURL == "" || dbConfig.DBName == "" {
 		return errors.New("invalid connection info. Missing host and db info")
 	}
-
-	client, err := mongo.NewClient(options.Client().ApplyURI(dbConfig.HostURL))
-	if err != nil {
-		return err
-	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbConfig.HostURL))
 	if err != nil {
 		log.Printf("MongoDB %s connection failed : %s. Exiting the program.\n", dbConfig.DBName, err)
 		return err
@@ -299,7 +295,7 @@ func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, doc
 // BulkWriteUpdate performs bulk update operation
 func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
 	if len(documents) == 0 {
-		return errors.New("No data to update")
+		return errors.New("no data to update")
 	}
 	models := make([]mongo.WriteModel, 0, len(documents))
 	for id, doc := range documents {
