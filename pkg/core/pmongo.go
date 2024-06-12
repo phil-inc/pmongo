@@ -44,6 +44,9 @@ type CursorOptions struct {
 // ErrNoDocumentsFound is an error returned when no documents are found in a MongoDB result.
 var ErrNoDocumentsFound = errors.New("mongo: no documents in result").Error()
 
+var ErrBadRequest = errors.New("bad request")                  // used for no documents found
+var ErrSomethingWentWrong = errors.New("something went wrong") // used for all errors other than no document found
+
 // Setup the MongoDB connection based on passed in config. It can be called multiple times to setup connection to
 // multiple MongoDB instances.
 func Setup(dbConfig DBConfig) error {
@@ -96,7 +99,7 @@ func (s *DBConnection) Collection(collectionName string) *mongo.Collection {
 func (s *DBConnection) Save(ctx context.Context, document Document) error {
 	coll := s.Collection(document.CollectionName())
 	_, err := coll.InsertOne(ctx, document)
-	return err
+	return maskedError(err)
 }
 
 // Update updates the given document based on given selector
@@ -104,7 +107,7 @@ func (s *DBConnection) Update(ctx context.Context, selector Q, document Document
 	coll := s.Collection(document.CollectionName())
 	//_, err := coll.UpdateOne(ctx, selector, bson.M{"$set": document})
 	_, err := coll.ReplaceOne(ctx, selector, document)
-	return err
+	return maskedError(err)
 }
 
 // Update updates the given document based on given selector
@@ -112,7 +115,7 @@ func (s *DBConnection) Upsert(ctx context.Context, selector Q, document Document
 	coll := s.Collection(document.CollectionName())
 	//_, err := coll.UpdateOne(ctx, selector, bson.M{"$set": document})
 	_, err := coll.ReplaceOne(ctx, selector, document, options.Replace().SetUpsert(true))
-	return err
+	return maskedError(err)
 }
 
 // UpdateByID updates the given document based on given id
@@ -121,7 +124,8 @@ func (s *DBConnection) UpdateByID(ctx context.Context, id string, result Documen
 	if err != nil {
 		return errors.New("invalid id")
 	}
-	return s.Update(ctx, Q{"_id": objID}, result)
+	err = s.Update(ctx, Q{"_id": objID}, result)
+	return maskedError(err)
 }
 
 // FindByID find the object by id. Returns error if it's not able to find the document. If document is found
@@ -131,7 +135,8 @@ func (s *DBConnection) FindByID(ctx context.Context, id string, result Document)
 	if err != nil {
 		return errors.New("invalid id")
 	}
-	return s.Find(ctx, Q{"_id": objID}, result)
+	err = s.Find(ctx, Q{"_id": objID}, result)
+	return maskedError(err)
 }
 
 // Find the data based on given query
@@ -142,7 +147,7 @@ func (s *DBConnection) Find(ctx context.Context, query Q, document Document) err
 			log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
 		}
 	}
-	return err
+	return maskedError(err)
 }
 
 // FindWithOpts finds the data based on the given query with specified find options.
@@ -153,35 +158,37 @@ func (s *DBConnection) FindWithOpts(ctx context.Context, query Q, document Docum
 			log.Printf("Error fetching %s with query %s. Error: %s\n", document.CollectionName(), query, err)
 		}
 	}
-	return err
+	return maskedError(err)
 }
 
 // FindAll returns all the documents based on given query
 func (s *DBConnection) FindAll(ctx context.Context, query Q, document Document) (interface{}, error) {
 	curr, err := s.Collection(document.CollectionName()).Find(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, maskedError(err)
 	}
 	documents := slice(document)
 	err = curr.All(ctx, documents)
 	if err != nil {
-		return nil, err
+		return nil, maskedError(err)
 	}
-	return results(documents)
+	val, err := results(documents)
+	return val, maskedError(err)
 }
 
 // FindAllWithOpts returns all the documents based on given query & find options
 func (s *DBConnection) FindAllWithOpts(ctx context.Context, query Q, document Document, opts *options.FindOptions) (interface{}, error) {
 	curr, err := s.Collection(document.CollectionName()).Find(ctx, query, opts)
 	if err != nil {
-		return nil, err
+		return nil, maskedError(err)
 	}
 	documents := slice(document)
 	err = curr.All(ctx, documents)
 	if err != nil {
-		return nil, err
+		return nil, maskedError(err)
 	}
-	return results(documents)
+	val, err := results(documents)
+	return val, maskedError(err)
 }
 
 // results converts a slice of documents into an interface.
@@ -205,7 +212,7 @@ func (s *DBConnection) Exists(ctx context.Context, query Q, document Document) (
 		if err.Error() == mongo.ErrNoDocuments.Error() {
 			return false, nil
 		}
-		return false, err
+		return false, maskedError(err)
 	}
 	return true, nil
 }
@@ -213,7 +220,7 @@ func (s *DBConnection) Exists(ctx context.Context, query Q, document Document) (
 // Remove removes the given document type based on the query
 func (s *DBConnection) Remove(ctx context.Context, query Q, document Document) error {
 	_, err := s.Collection(document.CollectionName()).DeleteOne(ctx, query)
-	return err
+	return maskedError(err)
 }
 
 // RemoveByID remove the object by id. Returns error if it's not able to find the document. If document is found
@@ -223,18 +230,20 @@ func (s *DBConnection) RemoveByID(ctx context.Context, id string, result Documen
 	if err != nil {
 		return errors.New("invalid id")
 	}
-	return s.Remove(ctx, Q{"_id": objID}, result)
+	err = s.Remove(ctx, Q{"_id": objID}, result)
+	return maskedError(err)
 }
 
 // RemoveAll removes all the document matching given selector query
 func (s *DBConnection) RemoveAll(ctx context.Context, query Q, document Document) error {
 	_, err := s.Collection(document.CollectionName()).DeleteMany(ctx, query)
-	return err
+	return maskedError(err)
 }
 
 // RemoveAllWithCount removes all the document matching given selector query
 func (s *DBConnection) RemoveAllWithCount(ctx context.Context, query Q, document Document) (int64, error) {
 	res, err := s.Collection(document.CollectionName()).DeleteMany(ctx, query)
+	err = maskedError(err)
 	if res == nil {
 		return -1, err
 	}
@@ -257,14 +266,14 @@ func (s *DBConnection) GetCursor(ctx context.Context, query Q, collectionName st
 func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collectionName, field string, value interface{}) error {
 	_, err := s.Collection(collectionName).UpdateOne(ctx, query, bson.M{"$set": bson.M{field: value}})
 
-	return err
+	return maskedError(err)
 }
 
 // InsertMany inserts multiple documents into a collection.
 func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
 	_, err := s.Collection(collectionName).InsertMany(ctx, documents)
 	if err != nil {
-		return err
+		return maskedError(err)
 	}
 
 	return nil
@@ -278,7 +287,7 @@ func (s *DBConnection) FindLastestDocument(ctx context.Context, query Q, documen
 
 	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
 	if err != nil {
-		return err
+		return maskedError(err)
 	}
 
 	return nil
@@ -287,25 +296,27 @@ func (s *DBConnection) FindLastestDocument(ctx context.Context, query Q, documen
 // FindAllWithProjection returns all the documents based on given query and specific field(s) specified in projections
 func (s *DBConnection) FindAllWithProjection(ctx context.Context, query Q, p Q, document Document) (interface{}, error) {
 	opts := options.Find().SetProjection(p)
-	return s.FindAllWithOpts(ctx, query, document, opts)
+	val, err := s.FindAllWithOpts(ctx, query, document, opts)
+	return val, maskedError(err)
 }
 
 // FindWithProjection returns the document based on given query and specific field(s) specified in projections
 func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, document Document) error {
 	opts := options.FindOne().SetProjection(p)
-	return s.FindWithOpts(ctx, query, document, opts)
+	err := s.FindWithOpts(ctx, query, document, opts)
+	return maskedError(err)
 }
 
 // BulkWriteUpdate performs bulk update operation
 func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
 	if len(documents) == 0 {
-		return errors.New("No data to update")
+		return errors.New("no data to update")
 	}
 	models := make([]mongo.WriteModel, 0, len(documents))
 	for id, doc := range documents {
 		objectID, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
-			return err
+			return maskedError(err)
 		}
 		filter := bson.M{"_id": objectID}
 		update := bson.M{"$set": doc}
@@ -316,7 +327,7 @@ func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName strin
 	opts := options.BulkWrite().SetOrdered(false)
 	_, err := s.Collection(collectionName).BulkWrite(ctx, models, opts)
 	if err != nil {
-		return err
+		return maskedError(err)
 	}
 	return nil
 }
@@ -345,7 +356,7 @@ func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName strin
 func (s *DBConnection) Unique(ctx context.Context, fieldName string, query interface{}, document Document) ([]interface{}, error) {
 	result, err := s.Collection(document.CollectionName()).Distinct(ctx, fieldName, query)
 	if err != nil {
-		return nil, err
+		return nil, maskedError(err)
 	}
 	return result, nil
 }
@@ -358,7 +369,7 @@ func (s *DBConnection) FindFirstDocument(ctx context.Context, query Q, document 
 
 	err := s.Collection(document.CollectionName()).FindOne(ctx, query, opts).Decode(document)
 	if err != nil {
-		return err
+		return maskedError(err)
 	}
 
 	return nil
@@ -368,7 +379,7 @@ func (s *DBConnection) FindFirstDocument(ctx context.Context, query Q, document 
 func (s *DBConnection) UpdateManyUsingQuery(ctx context.Context, selector Q, updateQuery Q, document Document) error {
 	coll := s.Collection(document.CollectionName())
 	_, err := coll.UpdateMany(ctx, selector, updateQuery)
-	return err
+	return maskedError(err)
 }
 
 // FindByObjectIDs finds documents based on an slice of string ObjectIDs.
@@ -379,5 +390,21 @@ func (s *DBConnection) FindByObjectIDs(ctx context.Context, oIDs []string, docum
 		},
 	}
 
-	return s.FindAll(ctx, q, document)
+	val, err := s.FindAll(ctx, q, document)
+	return val, maskedError(err)
+}
+
+// maskedError logs mongo error and return uniform message
+func maskedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	log.Printf("Error executing mongo query, %s", err.Error())
+
+	if err.Error() == mongo.ErrNoDocuments.Error() {
+		return ErrBadRequest
+	}
+
+	return ErrSomethingWentWrong
 }
