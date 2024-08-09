@@ -299,7 +299,7 @@ func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, doc
 // BulkWriteUpdate performs bulk update operation
 func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
 	if len(documents) == 0 {
-		return errors.New("No data to update")
+		return errors.New("no data to update")
 	}
 	models := make([]mongo.WriteModel, 0, len(documents))
 	for id, doc := range documents {
@@ -310,6 +310,31 @@ func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName strin
 		filter := bson.M{"_id": objectID}
 		update := bson.M{"$set": doc}
 		model := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update)
+		models = append(models, model)
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := s.Collection(collectionName).BulkWrite(ctx, models, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// BulkWriteAddUpdate performs bulk update operation
+func (s *DBConnection) BulkWriteAddUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
+	if len(documents) == 0 {
+		return errors.New("no data to update")
+	}
+	models := make([]mongo.WriteModel, 0, len(documents))
+	for id, doc := range documents {
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return err
+		}
+		filter := bson.M{"_id": objectID}
+		update := bson.M{"$set": doc}
+		model := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update).SetUpsert(true)
 		models = append(models, model)
 	}
 
