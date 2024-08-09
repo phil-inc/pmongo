@@ -13,7 +13,7 @@ test_ci:
 	sh test/entrypoint.sh
 
 test: clean
-	docker-compose -f $(compose_file) up --exit-code-from go-test
+	docker compose -f $(compose_file) up --exit-code-from go-test
 
 clean:
 	docker rm mongodb -f || true

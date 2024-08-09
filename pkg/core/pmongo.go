@@ -298,27 +298,12 @@ func (s *DBConnection) FindWithProjection(ctx context.Context, query Q, p Q, doc
 
 // BulkWriteUpdate performs bulk update operation
 func (s *DBConnection) BulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
-	if len(documents) == 0 {
-		return errors.New("No data to update")
-	}
-	models := make([]mongo.WriteModel, 0, len(documents))
-	for id, doc := range documents {
-		objectID, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			return err
-		}
-		filter := bson.M{"_id": objectID}
-		update := bson.M{"$set": doc}
-		model := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update)
-		models = append(models, model)
-	}
+	return s.bulkWriteUpdate(ctx, collectionName, documents, false)
+}
 
-	opts := options.BulkWrite().SetOrdered(false)
-	_, err := s.Collection(collectionName).BulkWrite(ctx, models, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+// BulkWriteAddUpdate performs bulk update operation
+func (s *DBConnection) BulkWriteAddUpdate(ctx context.Context, collectionName string, documents map[string]interface{}) error {
+	return s.bulkWriteUpdate(ctx, collectionName, documents, true)
 }
 
 // Unique retrieves unique values for a specified field in a MongoDB collection based on a given query.
@@ -380,4 +365,31 @@ func (s *DBConnection) FindByObjectIDs(ctx context.Context, oIDs []string, docum
 	}
 
 	return s.FindAll(ctx, q, document)
+}
+
+func (s *DBConnection) bulkWriteUpdate(ctx context.Context, collectionName string, documents map[string]interface{}, upsert bool) error {
+	if len(documents) == 0 {
+		return errors.New("no data to update")
+	}
+	models := make([]mongo.WriteModel, 0, len(documents))
+	for id, doc := range documents {
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return err
+		}
+		filter := bson.M{"_id": objectID}
+		update := bson.M{"$set": doc}
+		model := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update)
+		if upsert {
+			model.SetUpsert(true)
+		}
+		models = append(models, model)
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := s.Collection(collectionName).BulkWrite(ctx, models, opts)
+	if err != nil {
+		return err
+	}
+	return nil
 }
