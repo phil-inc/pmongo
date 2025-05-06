@@ -10,13 +10,13 @@ jobs:
     name: Lint & format code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: go fmt
         run: if [ "$(make fmt_list | wc -l)" -gt 1 ]; then exit 1; fi
   test-repo:
     name: Run `go test`
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test
         run: make test
