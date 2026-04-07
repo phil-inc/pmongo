@@ -260,6 +260,16 @@ func (s *DBConnection) UpdateFieldValue(ctx context.Context, query Q, collection
 	return err
 }
 
+// ConditionalUpdateField atomically updates a single field only when the document matches the given
+// query. Returns true if the document was matched and updated, false if nothing matched.
+func (s *DBConnection) ConditionalUpdateField(ctx context.Context, query Q, collectionName, field string, value interface{}) (bool, error) {
+	result, err := s.Collection(collectionName).UpdateOne(ctx, query, bson.M{"$set": bson.M{field: value}})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, nil
+}
+
 // InsertMany inserts multiple documents into a collection.
 func (s *DBConnection) InsertMany(ctx context.Context, collectionName string, documents []interface{}) error {
 	_, err := s.Collection(collectionName).InsertMany(ctx, documents)
