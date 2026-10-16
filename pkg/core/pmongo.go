@@ -403,3 +403,51 @@ func (s *DBConnection) bulkWriteUpdate(ctx context.Context, collectionName strin
 	}
 	return nil
 }
+
+// TransactionFunc performs work using a context bound to a MongoDB transaction.
+// Every database operation in the callback must use the provided context.
+type TransactionFunc func(ctx context.Context) (interface{}, error)
+
+// WithTransaction executes fn in a MongoDB transaction and commits only when fn returns nil.
+// The driver may invoke fn more than once when retrying transient transaction errors.
+func (s *DBConnection) WithTransaction(ctx context.Context, fn TransactionFunc, opts ...*options.TransactionOptions) (interface{}, error) {
+	if fn == nil {
+		return nil, errors.New("transaction function is required")
+	}
+
+	session, err := s.DB.Client().StartSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.EndSession(ctx)
+
+	return session.WithTransaction(ctx, func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		return fn(sessionCtx)
+	}, opts...)
+}
+
+// ConditionalReplace atomically replaces a document only when selector matches.
+// It returns true when a document matched and false when no document matched.
+func (s *DBConnection) ConditionalReplace(ctx context.Context, selector Q, document Document) (bool, error) {
+	result, err := s.Collection(document.CollectionName()).ReplaceOne(ctx, selector, document)
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, nil
+}
+
+// IsNoDocumentsError reports whether err indicates that a query matched no documents.
+func IsNoDocumentsError(err error) bool {
+	return errors.Is(err, mongo.ErrNoDocuments)
+}
+
+// IsDuplicateKeyError reports whether err was caused by a duplicate key constraint.
+func IsDuplicateKeyError(err error) bool {
+	return mongo.IsDuplicateKeyError(err)
+}
+
+// IsTransientTransactionError reports whether err is safe to retry as a transient transaction failure.
+func IsTransientTransactionError(err error) bool {
+	var commandErr mongo.CommandError
+	return errors.As(err, &commandErr) && commandErr.HasErrorLabel("TransientTransactionError")
+}
